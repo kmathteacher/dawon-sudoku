@@ -278,6 +278,7 @@ function submitSudoku() {
 
   let correct = 0;
   let total = 0;
+  let isCompletelyCorrect = true;
   const inputs = document.querySelectorAll('#sudoku-board input');
 
   inputs.forEach(input => {
@@ -289,12 +290,16 @@ function submitSudoku() {
       total++;
       if (value === answerKey[row][col]) {
         correct++;
+      } else {
+        isCompletelyCorrect = false;
       }
+    } else if (parseInt(input.value) !== answerKey[row][col]) {
+      isCompletelyCorrect = false;
     }
   });
 
   const accuracy = total === 0 ? 0 : (correct / total) * 100;
-  resultList.push({ time: elapsedTime, correct: correct, accuracy: accuracy.toFixed(2) });
+  resultList.push({ time: elapsedTime, correct: correct, full: isCompletelyCorrect, accuracy: accuracy.toFixed(2) });
 
   currentRound++;
 
@@ -305,20 +310,25 @@ function submitSudoku() {
   } else {
     const totalTime = Math.floor((Date.now() - startTime) / 1000);
     const avgAccuracy = (resultList.reduce((sum, r) => sum + parseFloat(r.accuracy), 0) / resultList.length).toFixed(2);
+    const totalCorrectCells = resultList.reduce((sum, r) => sum + r.correct, 0);
+    const totalFullSolved = resultList.filter(r => r.full).length;
+    const totalScore = totalCorrectCells + totalFullSolved * 5;
 
     const resultData = {
       "이름": name,
       "학번": studentId,
-      "걸린 시간": totalTime
+      "걸린 시간": totalTime,
+      "총 완성 스도쿠 수": totalFullSolved,
+      "총 맞은 칸 수": totalCorrectCells,
+      "총 점수": totalScore,
+      "평균정확도": avgAccuracy
     };
 
     for (let i = 0; i < resultList.length; i++) {
       resultData[`${i + 1}번`] = resultList[i].correct;
     }
 
-    resultData["평균정확도"] = avgAccuracy;
-
-    document.getElementById('result').innerText = `이름: ${name}\n학번: ${studentId}\n총 ${resultList.length}문제 완료!\n총 걸린 시간: ${totalTime}초\n평균 정확도: ${avgAccuracy}%`;
+    document.getElementById('result').innerText = `이름: ${name}\n학번: ${studentId}\n총 ${resultList.length}문제 완료!\n총 걸린 시간: ${totalTime}초\n정확히 푼 스도쿠 개수: ${totalFullSolved}\n총 맞은 칸 수: ${totalCorrectCells}\n총 점수: ${totalScore}\n평균 정확도: ${avgAccuracy}%`;
 
     fetch('https://script.google.com/macros/s/AKfycbxd3_PbxwPXs504ySndhmn7pV3-6FKRHZCVv3YhcUbfMY_Jy1Mw0nn39NT0MsvwiqGU/exec', {
       method: 'POST',
@@ -336,4 +346,3 @@ function submitSudoku() {
     });
   }
 }
-
